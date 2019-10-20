@@ -309,7 +309,7 @@ __STATIC__ void timer_task_entry(void *arg)
 
 #endif
 
-__KERNEL__ k_err_t tos_timer_init(void)
+__KERNEL__ k_err_t timer_init(void)
 {
 #if TOS_CFG_TIMER_AS_PROC > 0u
     return K_ERR_NONE;

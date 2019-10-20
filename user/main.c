@@ -17,29 +17,21 @@ extern void systick_init(void);
 extern ret_t platform_prepare(void);
 extern int gui_app_start(int lcd_w, int lcd_h);
 
-static tk_thread_t* s_ui_thread = NULL;
-
 void* awtk_thread(void* args) {
   gui_app_start(320, 480);
 
   return NULL;
 }
 
-void test_task2(void* Parameter) {
-  while (1) {
-    tos_task_delay(200);
-  }
-}
-
 static ret_t awtk_start_ui_thread(void) {
-  s_ui_thread = tk_thread_create(awtk_thread, NULL);
-  return_value_if_fail(s_ui_thread != NULL, RET_BAD_PARAMS);
+  tk_thread_t* ui_thread = tk_thread_create(awtk_thread, NULL);
+  return_value_if_fail(ui_thread != NULL, RET_BAD_PARAMS);
 
-  tk_thread_set_priority(s_ui_thread, 3);
-  tk_thread_set_name(s_ui_thread, "awtk");
-  tk_thread_set_stack_size(s_ui_thread, 2048);
+  tk_thread_set_priority(ui_thread, 3);
+  tk_thread_set_name(ui_thread, "awtk");
+  tk_thread_set_stack_size(ui_thread, 2048);
 
-  return tk_thread_start(s_ui_thread);
+  return tk_thread_start(ui_thread);
 }
 
 static void hardware_prepare(void) {
