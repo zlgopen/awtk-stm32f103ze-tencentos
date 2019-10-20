@@ -1384,6 +1384,11 @@
               <FileType>1</FileType>
               <FilePath>..\awtk\src\platforms\tos\thread.c</FilePath>
             </File>
+            <File>
+              <FileName>cond_var.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\awtk\src\platforms\tos\cond_var.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
