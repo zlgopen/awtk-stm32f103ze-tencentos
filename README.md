@@ -22,3 +22,6 @@ git clone https://github.com/zlgopen/awtk.git
 
 > 本项目目前可以运行，但还处于实验阶段。
 
+## 文档
+
+[AWTK 在腾讯 TOS 上的移植笔记]( docs/tos-port.md)
