@@ -97,10 +97,10 @@ TencentOS/TOS-CONFIG
 ## 2. 加入针对 TOS 实现的线程和同步的函数。
 
 ```
-src/platforms/tos/cond_var.c  
-src/platforms/tos/mutex.c  
-src/platforms/tos/sys_tick.c  
-src/platforms/tos/thread.c
+src/platforms/cmsis_os/mutex.c
+src/platforms/cmsis_os/semaphore.c
+src/platforms/cmsis_os/sys_tick.c
+src/platforms/cmsis_os/thread.c
 ```
 
 主要就是 SysTick 中断的实现，从 TencentOS-Demo 中拷贝过来就行了。
