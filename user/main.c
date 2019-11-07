@@ -12,6 +12,7 @@
 #include "lcd_driver.h"
 #include "tos.h"
 #include "tkc/thread.h"
+#include "platforms/cmsis_os/rtos.h"
 
 extern void systick_init(void);
 extern ret_t platform_prepare(void);
@@ -52,10 +53,10 @@ int main() {
   hardware_prepare();
   platform_prepare();
 
-  tos_knl_init();
+  rtos_init();
   tos_robin_config(TOS_ROBIN_STATE_ENABLED, (k_timeslice_t)500u);
 
-  awtk_start_ui_thread();
 
-  tos_knl_start();
+  awtk_start_ui_thread();
+  rtos_start();
 }

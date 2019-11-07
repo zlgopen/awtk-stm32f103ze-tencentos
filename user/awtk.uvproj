@@ -1430,14 +1430,19 @@
               <FilePath>..\awtk\src\platforms\cmsis_os\semaphore.c</FilePath>
             </File>
             <File>
+              <FileName>sys_tick.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\awtk\src\platforms\cmsis_os\sys_tick.c</FilePath>
+            </File>
+            <File>
               <FileName>thread.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\awtk\src\platforms\cmsis_os\thread.c</FilePath>
             </File>
             <File>
-              <FileName>sys_tick.c</FileName>
+              <FileName>rtos.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\awtk\src\platforms\cmsis_os\sys_tick.c</FilePath>
+              <FilePath>..\awtk\src\platforms\cmsis_os\rtos.c</FilePath>
             </File>
           </Files>
         </Group>
