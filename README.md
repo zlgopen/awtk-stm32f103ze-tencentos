@@ -20,8 +20,8 @@ git clone https://github.com/zlgopen/awtk.git
 
 2. 用 keil 打开 user/awtk.uvproj
 
-> 本项目目前可以运行，但还处于实验阶段。
-
 ## 文档
 
-[AWTK 在腾讯 TOS 上的移植笔记]( docs/tos-port.md)
+* [AWTK 在腾讯 TOS 上的移植笔记](docs/tos-port.md)
+
+* [AWTK 在 STM32F103 裸系统上的移植笔记](https://github.com/zlgopen/awtk/blob/master/docs/porting_to_stm32f103ze.md)

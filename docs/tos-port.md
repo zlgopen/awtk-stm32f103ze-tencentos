@@ -51,66 +51,34 @@ TencentOS/TOS-CONFIG
 
 > 一般来说不需要修改，使用官方提供的即可。我用的是 [TencentOS-Demo](https://github.com/jiejieTop/TencentOS-Demo) 项目中的。
 
-```
-#include "stm32f10x.h"
-#include <stdio.h>
-
-#define TOS_CFG_TASK_PRIO_MAX       10u
-
-#define TOS_CFG_ROUND_ROBIN_EN      1u
-
-#define TOS_CFG_OBJECT_VERIFY_EN       0u
-
-#define TOS_CFG_EVENT_EN            1u
-
-#define TOS_CFG_MMBLK_EN            1u
-
-#define TOS_CFG_MMHEAP_EN           1u
-
-#define TOS_CFG_MMHEAP_POOL_SIZE    0x3000
-
-#define TOS_CFG_MUTEX_EN            1u
-
-#define TOS_CFG_QUEUE_EN            1u
-
-#define TOS_CFG_TIMER_EN            1u
-
-#define TOS_CFG_SEM_EN              1u
-
-#if (TOS_CFG_QUEUE_EN > 0u)
-#define TOS_CFG_MSG_EN     1u
-#else
-#define TOS_CFG_MSG_EN     0u
-#endif
-
-#define TOS_CFG_VFS_EN                  1u
-
-#define TOS_CFG_MSG_POOL_SIZE           10u
-
-#define TOS_CFG_IDLE_TASK_STK_SIZE      80u
-
-#define TOS_CFG_CPU_TICK_PER_SECOND     1000u
-
-#define TOS_CFG_CPU_CLOCK               (SystemCoreClock)
-```
-
 ## 2. 加入针对 TOS 实现的线程和同步的函数。
 
 ```
-src/platforms/cmsis_os/mutex.c
-src/platforms/cmsis_os/semaphore.c
-src/platforms/cmsis_os/sys_tick.c
-src/platforms/cmsis_os/thread.c
+src/platforms/tos/mutex.c
+src/platforms/tos/semaphore.c
+src/platforms/tos/thread.c
+src/platforms/common/sys_tick.c
 ```
+
+## 3. 实现 rtos.c
 
 主要就是 SysTick 中断的实现，从 TencentOS-Demo 中拷贝过来就行了。
 
-> 非 arm 平台 SysTick 函数的名称可能不一样，根据自己的需要调整。
-
 ```
-static volatile uint64_t g_sys_tick;
+ret_t rtos_init(void) {
+  tos_knl_init();
+  tos_robin_config(TOS_ROBIN_STATE_ENABLED, (k_timeslice_t)500u);
 
-void tos_tick(void) {
+  return RET_OK;
+}
+
+ret_t rtos_start(void) {
+  tos_knl_start();
+
+  return RET_OK;
+}
+
+void rtos_tick(void) {
   if (tos_knl_is_running()) {
     tos_knl_irq_enter();
     tos_tick_handler();
@@ -118,18 +86,14 @@ void tos_tick(void) {
   }
 }
 
-void SysTick_Handler(void) {
-  g_sys_tick++;
-  tos_tick();
+void rtos_delay(uint32_t ms) {
+  tos_task_delay(ms);
 }
 ```
 
-> 这些实现目前还不完善，勉强可用吧，有空再来搞。
-
-## 3. 在线程中启动 AWTK
+## 4. 在线程中启动 AWTK
 
 ```
-
 void* awtk_thread(void* args) {
   gui_app_start(320, 480);
 
@@ -147,30 +111,15 @@ static ret_t awtk_start_ui_thread(void) {
   return tk_thread_start(ui_thread);
 }
 
-static void hardware_prepare(void) {
-  NVIC_PriorityGroupConfig(NVIC_PriorityGroup_2);
-  systick_init();
-  led_init();
-  button_init();
-  TFT_Init();
-  TFT_ClearScreen(BLACK);
-  FLASH_Init();
-  TOUCH_Init();
-
-  TIM3_Init(50, 7199);
-  rtc_init();
-}
-
 int main() {
   hardware_prepare();
   platform_prepare();
 
-  tos_knl_init();
-  tos_robin_config(TOS_ROBIN_STATE_ENABLED, (k_timeslice_t)500u);
-
+  rtos_init();
   awtk_start_ui_thread();
-
-  tos_knl_start();
+  rtos_start();
+	
+	return 0;
 }
 ```
 

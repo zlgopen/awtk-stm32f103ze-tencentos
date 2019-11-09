@@ -1422,27 +1422,27 @@
             <File>
               <FileName>mutex.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\awtk\src\platforms\cmsis_os\mutex.c</FilePath>
-            </File>
-            <File>
-              <FileName>semaphore.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\awtk\src\platforms\cmsis_os\semaphore.c</FilePath>
-            </File>
-            <File>
-              <FileName>sys_tick.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\awtk\src\platforms\cmsis_os\sys_tick.c</FilePath>
-            </File>
-            <File>
-              <FileName>thread.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\awtk\src\platforms\cmsis_os\thread.c</FilePath>
+              <FilePath>..\awtk\src\platforms\tos\mutex.c</FilePath>
             </File>
             <File>
               <FileName>rtos.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\awtk\src\platforms\cmsis_os\rtos.c</FilePath>
+              <FilePath>..\awtk\src\platforms\tos\rtos.c</FilePath>
+            </File>
+            <File>
+              <FileName>semaphore.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\awtk\src\platforms\tos\semaphore.c</FilePath>
+            </File>
+            <File>
+              <FileName>thread.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\awtk\src\platforms\tos\thread.c</FilePath>
+            </File>
+            <File>
+              <FileName>sys_tick.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\awtk\src\platforms\common\sys_tick.c</FilePath>
             </File>
           </Files>
         </Group>

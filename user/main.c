@@ -10,7 +10,7 @@
 #include "touch.h"
 #include "usart.h"
 #include "lcd_driver.h"
-#include "tos.h"
+
 #include "tkc/thread.h"
 #include "platforms/cmsis_os/rtos.h"
 
@@ -54,9 +54,8 @@ int main() {
   platform_prepare();
 
   rtos_init();
-  tos_robin_config(TOS_ROBIN_STATE_ENABLED, (k_timeslice_t)500u);
-
-
   awtk_start_ui_thread();
   rtos_start();
+	
+	return 0;
 }
