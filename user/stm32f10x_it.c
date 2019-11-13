@@ -100,10 +100,6 @@ void UsageFault_Handler(void)
   }
 }
 
-
-
-
-
 /**
   * @brief  This function handles SVCall exception.
   * @param  None
@@ -122,18 +118,15 @@ void DebugMon_Handler(void)
 {
 }
 
-#if 0
+
 /**
-  * @brief  This function handles PendSVC exception.
+  * @brief  This function handles SysTick Handler.
   * @param  None
   * @retval None
   */
-void PendSV_Handler(void)
-{
-}
-
-#endif
-
+//void SysTick_Handler(void)
+//{
+//}
 
 /******************************************************************************/
 /*                 STM32F10x Peripherals Interrupt Handlers                   */
