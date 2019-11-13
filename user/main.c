@@ -43,7 +43,6 @@ void hardware_prepare(void) {
 	TOUCH_Init();
 	TIM3_Init(50,7199);
 	RTC_Init();
-	LCD_Clear(RED);
 }
 
 int main() {
