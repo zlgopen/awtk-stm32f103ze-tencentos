@@ -1,4 +1,21 @@
-#include <tos.h>
+/*----------------------------------------------------------------------------
+ * Tencent is pleased to support the open source community by making TencentOS
+ * available.
+ *
+ * Copyright (C) 2019 THL A29 Limited, a Tencent company. All rights reserved.
+ * If you have downloaded a copy of the TencentOS binary from Tencent, please
+ * note that the TencentOS binary is licensed under the BSD 3-Clause License.
+ *
+ * If you have downloaded a copy of the TencentOS source code from Tencent,
+ * please note that TencentOS source code is licensed under the BSD 3-Clause
+ * License, except for the third-party components listed below which are
+ * subject to different license terms. Your integration of TencentOS into your
+ * own projects may require compliance with the BSD 3-Clause License, as well
+ * as the other licenses applicable to the third-party components included
+ * within TencentOS.
+ *---------------------------------------------------------------------------*/
+
+#include "tos_k.h"
 
 __STATIC__ k_prio_t readyqueue_prio_highest_get(void)
 {
@@ -38,7 +55,7 @@ __STATIC_INLINE__ void readyqueue_prio_mark(k_prio_t prio)
 /**
  * when this function involved, must be at least one task in the task list of the certain priority
  */
-__KERNEL__ int readyqueue_is_prio_onlyone(k_prio_t prio)
+__KNL__ int readyqueue_is_prio_onlyone(k_prio_t prio)
 {
     k_list_t *task_list;
     k_task_t *task;
@@ -48,7 +65,7 @@ __KERNEL__ int readyqueue_is_prio_onlyone(k_prio_t prio)
     return task->pend_list.next == task_list;
 }
 
-__KERNEL__ k_task_t *readyqueue_first_task_get(k_prio_t prio)
+__KNL__ k_task_t *readyqueue_first_task_get(k_prio_t prio)
 {
     k_list_t *task_list;
 
@@ -56,7 +73,7 @@ __KERNEL__ k_task_t *readyqueue_first_task_get(k_prio_t prio)
     return TOS_LIST_FIRST_ENTRY_OR_NULL(task_list, k_task_t, pend_list);
 }
 
-__KERNEL__ k_task_t *readyqueue_highest_ready_task_get(void)
+__KNL__ k_task_t *readyqueue_highest_ready_task_get(void)
 {
     k_list_t *task_list;
 
@@ -64,7 +81,7 @@ __KERNEL__ k_task_t *readyqueue_highest_ready_task_get(void)
     return TOS_LIST_FIRST_ENTRY(task_list, k_task_t, pend_list);
 }
 
-__KERNEL__ void readyqueue_init(void)
+__KNL__ void readyqueue_init(void)
 {
     uint8_t i;
 
@@ -79,28 +96,7 @@ __KERNEL__ void readyqueue_init(void)
     }
 }
 
-__DEBUG__ void readyqueue_walkthru(void)
-{
-    uint8_t i;
-    k_task_t *task;
-    k_list_t *task_list, *curr;
-
-    tos_kprintf("==========================\n");
-    tos_kprintf("%d\n", k_rdyq.highest_prio);
-
-    for (i = 0; i < TOS_CFG_TASK_PRIO_MAX; ++i) {
-        task_list = &k_rdyq.task_list_head[i];
-        if (!tos_list_empty(task_list)) {
-            TOS_LIST_FOR_EACH(curr, task_list) {
-                task = TOS_LIST_ENTRY(curr, k_task_t, pend_list);
-                tos_kprintf("----  %d   %d   [%d]  %s\n", task->prio, i, task->state, task->name);
-            }
-        }
-    }
-    tos_kprintf("\n\n");
-}
-
-__KERNEL__ void readyqueue_add_head(k_task_t *task)
+__KNL__ void readyqueue_add_head(k_task_t *task)
 {
     k_prio_t task_prio;
     k_list_t *task_list;
@@ -115,7 +111,7 @@ __KERNEL__ void readyqueue_add_head(k_task_t *task)
     tos_list_add(&task->pend_list, task_list);
 }
 
-__KERNEL__ void readyqueue_add_tail(k_task_t *task)
+__KNL__ void readyqueue_add_tail(k_task_t *task)
 {
     k_prio_t task_prio;
     k_list_t *task_list;
@@ -130,7 +126,7 @@ __KERNEL__ void readyqueue_add_tail(k_task_t *task)
     tos_list_add_tail(&task->pend_list, task_list);
 }
 
-__KERNEL__ void readyqueue_add(k_task_t *task)
+__KNL__ void readyqueue_add(k_task_t *task)
 {
     if (task->prio == k_curr_task->prio) {
         readyqueue_add_tail(task);
@@ -139,7 +135,7 @@ __KERNEL__ void readyqueue_add(k_task_t *task)
     }
 }
 
-__KERNEL__ void readyqueue_remove(k_task_t *task)
+__KNL__ void readyqueue_remove(k_task_t *task)
 {
     k_prio_t task_prio;
     k_list_t *task_list;
@@ -158,7 +154,7 @@ __KERNEL__ void readyqueue_remove(k_task_t *task)
     }
 }
 
-__KERNEL__ void readyqueue_move_head_to_tail(k_prio_t prio)
+__KNL__ void readyqueue_move_head_to_tail(k_prio_t prio)
 {
     k_list_t *task_list;
 

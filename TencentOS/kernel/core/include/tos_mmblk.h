@@ -1,7 +1,24 @@
+/*----------------------------------------------------------------------------
+ * Tencent is pleased to support the open source community by making TencentOS
+ * available.
+ *
+ * Copyright (C) 2019 THL A29 Limited, a Tencent company. All rights reserved.
+ * If you have downloaded a copy of the TencentOS binary from Tencent, please
+ * note that the TencentOS binary is licensed under the BSD 3-Clause License.
+ *
+ * If you have downloaded a copy of the TencentOS source code from Tencent,
+ * please note that TencentOS source code is licensed under the BSD 3-Clause
+ * License, except for the third-party components listed below which are
+ * subject to different license terms. Your integration of TencentOS into your
+ * own projects may require compliance with the BSD 3-Clause License, as well
+ * as the other licenses applicable to the third-party components included
+ * within TencentOS.
+ *---------------------------------------------------------------------------*/
+
 #ifndef _TOS_MMBLK_H_
 #define  _TOS_MMBLK_H_
 
-#if TOS_CFG_MMBLK_EN > 0u
+__CDECLS_BEGIN
 
 #define K_MMBLK_NEXT_BLK(blk_curr, blk_size)        ((void *)((cpu_addr_t)blk_curr + blk_size))
 #define K_MMBLK_ALIGN_MASK                          (sizeof(void *) - 1u)
@@ -86,5 +103,5 @@ __API__ k_err_t tos_mmblk_free(k_mmblk_pool_t *mbp, void *blk);
 
 #endif
 
-#endif /* _TOS_MMBLK_H_ */
+__CDECLS_END
 

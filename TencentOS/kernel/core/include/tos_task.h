@@ -1,5 +1,27 @@
+/*----------------------------------------------------------------------------
+ * Tencent is pleased to support the open source community by making TencentOS
+ * available.
+ *
+ * Copyright (C) 2019 THL A29 Limited, a Tencent company. All rights reserved.
+ * If you have downloaded a copy of the TencentOS binary from Tencent, please
+ * note that the TencentOS binary is licensed under the BSD 3-Clause License.
+ *
+ * If you have downloaded a copy of the TencentOS source code from Tencent,
+ * please note that TencentOS source code is licensed under the BSD 3-Clause
+ * License, except for the third-party components listed below which are
+ * subject to different license terms. Your integration of TencentOS into your
+ * own projects may require compliance with the BSD 3-Clause License, as well
+ * as the other licenses applicable to the third-party components included
+ * within TencentOS.
+ *---------------------------------------------------------------------------*/
+
 #ifndef _TOS_TASK_H_
 #define  _TOS_TASK_H_
+
+__CDECLS_BEGIN
+
+#define K_TASK_NAME_MAX                 (16u)
+#define K_TASK_STK_SIZE_MIN             (sizeof(cpu_context_t))
 
 // task state is just a flag, indicating which manager list we are in.
 
@@ -30,7 +52,7 @@
 // suspended when sleeping
 #define K_TASK_STATE_SLEEP_SUSPENDED                  (k_task_state_t)(K_TASK_STATE_SLEEP | K_TASK_STATE_SUSPENDED)
 
-// suspened when pending
+// suspended when pending
 #define K_TASK_STATE_PEND_SUSPENDED                   (k_task_state_t)(K_TASK_STATE_PEND | K_TASK_STATE_SUSPENDED)
 
 // suspended when pendtimeout
@@ -44,52 +66,62 @@
 
 typedef void (*k_task_entry_t)(void *arg);
 
+typedef void (*k_task_walker_t)(k_task_t *task);
+
 /**
  * task control block
  */
-typedef struct k_task_st {
-    k_stack_t          *sp;                 /**< task stack pointer. This lady always comes first, we use her in port_s.S for context switch. */
+struct k_task_st {
+    k_stack_t          *sp;                     /**< task stack pointer. This lady always comes first, we count on her in port_s.S for context switch. */
 
-#if TOS_CFG_OBJECT_VERIFY_EN > 0u
-    knl_obj_t           knl_obj;            /**< just for verification, test whether current object is really a task. */
+    knl_obj_t           knl_obj;                /**< just for verification, test whether current object is really a task. */
+
+    char                name[K_TASK_NAME_MAX];  /**< task name */
+    k_task_entry_t      entry;                  /**< task entry */
+    void               *arg;                    /**< argument for task entry */
+    k_task_state_t      state;                  /**< just state */
+    k_prio_t            prio;                   /**< just priority */
+
+    k_stack_t          *stk_base;               /**< task stack base address */
+    size_t              stk_size;               /**< stack size of the task */
+
+#if TOS_CFG_TASK_DYNAMIC_CREATE_EN > 0u
+    k_list_t            dead_list;              /**< when a dynamic allocated task destroyed, we hook the task's dead_list to the k_dead_task_list */
 #endif
 
-    char               *name;               /**< task name */
-    k_task_entry_t      entry;              /**< task entry */
-    void               *arg;                /**< argument for task entry */
-    k_task_state_t      state;              /**< just state */
-    k_prio_t            prio;               /**< just priority */
+    k_list_t            stat_list;              /**< list for hooking us to the k_stat_list */
 
-    k_stack_t          *stk_base;           /**< task stack base address */
-    size_t              stk_size;           /**< stack size of the task */
+    k_tick_t            tick_expires;           /**< if we are in k_tick_list, how much time will we wait for? */
 
-    k_tick_t            tick_expires;       /**< if we are in k_tick_list, how much time will we wait for? */
-
-    k_list_t            tick_list;          /**< list for hooking us to the k_tick_list */
-    k_list_t            pend_list;          /**< when we are ready, our pend_list is in readyqueue; when pend, in a certain pend object's list. */
+    k_list_t            tick_list;              /**< list for hooking us to the k_tick_list */
+    k_list_t            pend_list;              /**< when we are ready, our pend_list is in readyqueue; when pend, in a certain pend object's list. */
 
 #if TOS_CFG_MUTEX_EN > 0u
-    k_list_t            mutex_own_list;     /**< the list hold all the mutex we own.
-                                                When we die(tos_task_destroy), we have an obligation to wakeup all the task pending for those mutexs we own;
-                                                if not, those pending tasks may never get a change to wakeup. */
-    k_prio_t            prio_pending;       /*< when tos_task_prio_change called, we may be just the owner of a mutex.
-                                                to avoid PRIORITY INVERSION, must make sure our priority is higher than any one who is pending for
-                                                the mutex we hold. So, if the prio_new of tos_task_prio_change is not appropriate
-                                                (may against the principle of PRIORITY INVERSION), we just mark the prio_new here, do the real priority
-                                                change in the right time(mutex_old_owner_release) later. */
+    k_list_t            mutex_own_list;         /**< the list hold all the mutex we own.
+                                                    When we die(tos_task_destroy), we have an obligation to wakeup all the task pending for those mutexs we own;
+                                                    if not, those pending tasks may never get a chance to wakeup. */
+    k_prio_t            prio_pending;           /*< when tos_task_prio_change called, we may be just the owner of a mutex.
+                                                    to avoid PRIORITY INVERSION, must make sure our priority is higher than any one who is pending for
+                                                    the mutex we hold. So, if the prio_new of tos_task_prio_change is not appropriate
+                                                    (may against the principle of PRIORITY INVERSION), we just mark the prio_new here, do the real priority
+                                                    change in the right time(mutex_old_owner_release) later. */
 #endif
 
-    pend_obj_t         *pending_obj;       /**< if we are pending, which pend object's list we are in? */
-    pend_state_t        pend_state;         /**< why we wakeup from a pend */
+    pend_obj_t         *pending_obj;            /**< if we are pending, which pend object's list we are in? */
+    pend_state_t        pend_state;             /**< why we wakeup from a pend */
 
 #if TOS_CFG_ROUND_ROBIN_EN > 0u
     k_timeslice_t       timeslice_reload;   /**< if current time slice is used up, use time_slice_reload to reload our time slice */
     k_timeslice_t       timeslice;          /**< how much time slice left for us? */
 #endif
 
-#if TOS_CFG_MSG_EN > 0u
-    void               *msg_addr;           /**< if we pend a queue successfully, our msg_addr and msg_size will be set by the queue poster */
-    size_t              msg_size;
+#if (TOS_CFG_MESSAGE_QUEUE_EN > 0u) || (TOS_CFG_PRIORITY_MESSAGE_QUEUE_EN > 0u)
+    void               *msg;                /**< if we pend a message queue successfully, our msg will be set by the message queue poster */
+#endif
+
+#if (TOS_CFG_MAIL_QUEUE_EN > 0u) || (TOS_CFG_PRIORITY_MAIL_QUEUE_EN > 0u)
+    void               *mail;               /**< if we pend a mail queue successfully, our mail and mail_size will be set by the message queue poster */
+    size_t              mail_size;
 #endif
 
 #if TOS_CFG_EVENT_EN > 0u
@@ -98,7 +130,7 @@ typedef struct k_task_st {
     k_event_flag_t     *flag_match;         /**< if we pend an event successfully, flag_match will be set by the event poster, and will be returned
                                                     by tos_event_pend to the caller */
 #endif
-} k_task_t;
+};
 
 /**
  * @brief Create a task.
@@ -114,7 +146,6 @@ typedef struct k_task_st {
  * @param[in]   stk_base    stack base address of the task.
  * @param[in]   stk_size    stack size of the task.
  * @param[in]   timeslice   time slice of the task.
- * @param[in]   opt         option for the function call.
  *
  * @return  errcode
  * @retval  #K_ERR_TASK_STK_SIZE_INVALID    stack size is invalid.
@@ -143,6 +174,36 @@ __API__ k_err_t tos_task_create(k_task_t *task,
  * @retval  #K_ERR_NONE                 return successfully.
  */
 __API__ k_err_t tos_task_destroy(k_task_t *task);
+
+#if TOS_CFG_TASK_DYNAMIC_CREATE_EN > 0u
+
+/**
+ * @brief Create a task with a dynamic allocated task handler and stack.
+ * create a task with a dynamic allocated task handler and stack.
+ *
+ * @param[out]  task        dynamic allocated task handler.
+ * @param[in]   name        name of the task.
+ * @param[in]   entry       running entry of the task.
+ * @param[in]   arg         argument for the entry of the task.
+ * @param[in]   prio        priority of the task.
+ * @param[in]   stk_size    stack size of the task.
+ * @param[in]   timeslice   time slice of the task.
+ *
+ * @return  errcode
+ * @retval  #K_ERR_TASK_STK_SIZE_INVALID    stack size is invalid.
+ * @retval  #K_ERR_TASK_PRIO_INVALID        priority is invalid.
+ * @retval  #K_ERR_TASK_OUT_OF_MEMORY       out of memory(insufficient heap memory).
+ * @retval  #K_ERR_NONE                     return successfully.
+ */
+__API__ k_err_t tos_task_create_dyn(k_task_t **task,
+                                                    char *name,
+                                                    k_task_entry_t entry,
+                                                    void *arg,
+                                                    k_prio_t prio,
+                                                    size_t stk_size,
+                                                    k_timeslice_t timeslice);
+
+#endif
 
 /**
  * @brief Delay current task for ticks.
@@ -228,6 +289,18 @@ __API__ k_err_t tos_task_prio_change(k_task_t *task, k_prio_t prio_new);
  */
 __API__ void    tos_task_yield(void);
 
+/**
+ * @brief Get current running task.
+ * Get current running task.
+ *
+ * @attention if kernel is not running, you'll get K_NULL
+ *
+ * @param   None
+ *
+ * @return  current running task handler
+ */
+__API__ k_task_t *tos_task_curr_task_get(void);
+
 
 #if TOS_CFG_TASK_STACK_DRAUGHT_DEPTH_DETACT_EN > 0u
 
@@ -247,65 +320,125 @@ __API__ k_err_t tos_task_stack_draught_depth(k_task_t *task, int *depth);
 
 #endif
 
-__KERNEL__ __STATIC_INLINE__ int task_state_is_ready(k_task_t *task)
+/**
+ * @brief Walk through all the tasks in the statistic list.
+ *
+ * @attention None
+ *
+ * @param[in]   walker      a function involved when meeting each tasks in the list.
+ *
+ * @return  None
+ */
+__API__ void tos_task_walkthru(k_task_walker_t walker);
+
+/**
+ * @brief A debug API for display all tasks information.
+ *
+ * @attention None
+ *
+ * @param   None
+ *
+ * @return  None
+ */
+__DEBUG__ void tos_task_info_display(void);
+
+__KNL__ void task_free_all(void);
+
+__KNL__ __STATIC_INLINE__ int task_state_is_ready(k_task_t *task)
 {
     return task->state == K_TASK_STATE_READY;
 }
 
-__KERNEL__ __STATIC_INLINE__ int task_state_is_sleeping(k_task_t *task)
+__KNL__ __STATIC_INLINE__ int task_state_is_sleeping(k_task_t *task)
 {
     return task->state & K_TASK_STATE_SLEEP;
 }
 
-__KERNEL__ __STATIC_INLINE__ int task_state_is_pending(k_task_t *task)
+__KNL__ __STATIC_INLINE__ int task_state_is_pending(k_task_t *task)
 {
     return task->state & K_TASK_STATE_PEND;
 }
 
-__KERNEL__ __STATIC_INLINE__ int task_state_is_suspended(k_task_t *task)
+__KNL__ __STATIC_INLINE__ int task_state_is_suspended(k_task_t *task)
 {
     return task->state & K_TASK_STATE_SUSPENDED;
 }
 
-__KERNEL__ __STATIC_INLINE__ void task_state_reset_pending(k_task_t *task)
+__KNL__ __STATIC_INLINE__ void task_state_reset_pending(k_task_t *task)
 {
     task->state &= ~K_TASK_STATE_PEND;
 }
 
-__KERNEL__ __STATIC_INLINE__ void task_state_reset_sleeping(k_task_t *task)
+__KNL__ __STATIC_INLINE__ void task_state_reset_sleeping(k_task_t *task)
 {
     task->state &= ~K_TASK_STATE_SLEEP;
 }
 
-__KERNEL__ __STATIC_INLINE__ void task_state_reset_suspended(k_task_t *task)
+__KNL__ __STATIC_INLINE__ void task_state_reset_suspended(k_task_t *task)
 {
     task->state &= ~K_TASK_STATE_SUSPENDED;
 }
 
-__KERNEL__ __STATIC_INLINE__ void task_state_set_suspended(k_task_t *task)
+__KNL__ __STATIC_INLINE__ void task_state_set_suspended(k_task_t *task)
 {
     task->state |= K_TASK_STATE_SUSPENDED;
 }
 
-__KERNEL__ __STATIC_INLINE__ void task_state_set_pend(k_task_t *task)
+__KNL__ __STATIC_INLINE__ void task_state_set_pend(k_task_t *task)
 {
     task->state |= K_TASK_STATE_PEND;
 }
 
-__KERNEL__ __STATIC_INLINE__ void task_state_set_ready(k_task_t *task)
+__KNL__ __STATIC_INLINE__ void task_state_set_ready(k_task_t *task)
 {
     task->state = K_TASK_STATE_READY;
 }
 
-__KERNEL__ __STATIC_INLINE__ void task_state_set_deleted(k_task_t *task)
+__KNL__ __STATIC_INLINE__ void task_state_set_deleted(k_task_t *task)
 {
     task->state = K_TASK_STATE_DELETED;
 }
 
-__KERNEL__ __STATIC_INLINE__ void task_state_set_sleeping(k_task_t *task)
+__KNL__ __STATIC_INLINE__ void task_state_set_sleeping(k_task_t *task)
 {
     task->state |= K_TASK_STATE_SLEEP;
 }
+
+__DEBUG__ __STATIC_INLINE__ void task_default_walker(k_task_t *task)
+{
+    char *state_str = "ABNORMAL";
+
+    state_str = state_str;
+    tos_kprintln("tsk name: %s", task->name);
+
+    if (tos_task_curr_task_get() == task) {
+        state_str = "RUNNING";
+    } else if (task->state == K_TASK_STATE_PENDTIMEOUT_SUSPENDED) {
+        state_str = "PENDTIMEOUT_SUSPENDED";
+    } else if (task->state == K_TASK_STATE_PEND_SUSPENDED) {
+        state_str = "PEND_SUSPENDED";
+    } else if (task->state == K_TASK_STATE_SLEEP_SUSPENDED) {
+        state_str = "SLEEP_SUSPENDED";
+    } else if (task->state == K_TASK_STATE_PENDTIMEOUT) {
+        state_str = "PENDTIMEOUT";
+    } else if (task->state == K_TASK_STATE_SUSPENDED) {
+        state_str = "SUSPENDED";
+    } else if (task->state == K_TASK_STATE_PEND) {
+        state_str = "PEND";
+    } else if (task->state == K_TASK_STATE_SLEEP) {
+        state_str = "SLEEP";
+    } else if (task->state == K_TASK_STATE_READY) {
+        state_str = "READY";
+    }
+    tos_kprintln("tsk stat: %s", state_str);
+
+    tos_kprintln("stk size: %d", task->stk_size);
+    tos_kprintln("stk base: 0x%p", task->stk_base);
+    tos_kprintln("stk top : 0x%p", task->stk_base + task->stk_size);
+    tos_kprintf("\n");
+}
+
+__CDECLS_END
 
 #endif /* _TOS_TASK_H_ */
 

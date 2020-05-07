@@ -1,4 +1,21 @@
-#include "tos.h"
+/*----------------------------------------------------------------------------
+ * Tencent is pleased to support the open source community by making TencentOS
+ * available.
+ *
+ * Copyright (C) 2019 THL A29 Limited, a Tencent company. All rights reserved.
+ * If you have downloaded a copy of the TencentOS binary from Tencent, please
+ * note that the TencentOS binary is licensed under the BSD 3-Clause License.
+ *
+ * If you have downloaded a copy of the TencentOS source code from Tencent,
+ * please note that TencentOS source code is licensed under the BSD 3-Clause
+ * License, except for the third-party components listed below which are
+ * subject to different license terms. Your integration of TencentOS into your
+ * own projects may require compliance with the BSD 3-Clause License, as well
+ * as the other licenses applicable to the third-party components included
+ * within TencentOS.
+ *---------------------------------------------------------------------------*/
+
+#include "tos_k.h"
 
 #if TOS_CFG_FAULT_BACKTRACE_EN > 0u
 
@@ -205,7 +222,7 @@ __STATIC__ void fault_gather_information(cpu_data_t lr, fault_exc_frame_t *frame
     info->is_stk_ovrf = (info->sp_before_fault < info->stack_start || info->sp_before_fault > info->stack_limit);
 }
 
-__KERNEL__ int fault_default_log_writer(const char *format, ...)
+__KNL__ int fault_default_log_writer(const char *format, ...)
 {
     int len;
     va_list ap;
@@ -222,7 +239,7 @@ __API__ void tos_fault_log_writer_set(k_fault_log_writer_t log_writer)
     k_fault_log_writer = log_writer;
 }
 
-__KERNEL__ void fault_backtrace(cpu_addr_t lr, fault_exc_frame_t *frame)
+__KNL__ void fault_backtrace(cpu_addr_t lr, fault_exc_frame_t *frame)
 {
     fault_info_t info;
 

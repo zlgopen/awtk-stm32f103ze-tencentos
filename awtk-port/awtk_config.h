@@ -174,7 +174,7 @@
  * 对于低端平台，如果内存不足以提供完整的FrameBuffer，请定义本宏启用局部FrameBuffer，可大幅度提高渲染性能。
  *
  */
- #define FRAGMENT_FRAME_BUFFER_SIZE 8 * 1024
+ #define FRAGMENT_FRAME_BUFFER_SIZE 6 * 1024
 
 #endif /*AWTK_CONFIG_H*/
 
